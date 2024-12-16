@@ -79,11 +79,12 @@ void AMController::init(
     // ----------- Setup Time -----------
 
     struct tm d;
-    time_t epoch = 4102444799; // Thursday, December 31, 2099 11:59:59 PM
+    time_t epoch = 1733829472; // Tuesday, December 10, 2024 11:32:23 AM
     memcpy(&d, gmtime(&epoch), sizeof(struct tm));
     aon_timer_start_calendar(&d);
 
     // -----------------------------------
+    sleep_ms(100); // Wait a while before configuring the SD Card
 
     sd_manager = new SDManager(this);
 
@@ -397,13 +398,12 @@ void AMController::process_received_buffer(char *buffer)
 
 bool AMController::alarm_timer_callback(__unused struct repeating_timer *t)
 {
-   AMController *p = (AMController *)t->user_data;
+    AMController *p = (AMController *)t->user_data;
 
-   p->alarms.check_fire_alarms(p->processAlarms);
+    p->alarms.check_fire_alarms(p->processAlarms);
 
-   return true;
+    return true;
 }
-
 
 void AMController::write_message(const char *variable, int value)
 {
@@ -585,124 +585,124 @@ void AMController::write_message(const char *variable, float x, float y, float z
 
 unsigned long AMController::now()
 {
-   time_t now = time(NULL);
-   return now;
+    time_t now = time(NULL);
+    return now;
 }
 
 void AMController::log(int msg)
 {
-   write_message("$D$", msg);
+    write_message("$D$", msg);
 }
 void AMController::log(long msg)
 {
-   write_message("$D$", msg);
+    write_message("$D$", msg);
 }
 
 void AMController::log(unsigned long msg)
 {
-   write_message("$D$", msg);
+    write_message("$D$", msg);
 }
 
 void AMController::log(float msg)
 {
-   write_message("$D$", msg);
+    write_message("$D$", msg);
 }
 
 void AMController::log(const char *msg)
 {
-   write_message("$D$", msg);
+    write_message("$D$", msg);
 }
 
 void AMController::logLn(int msg)
 {
-   write_message("$DLN$", msg);
+    write_message("$DLN$", msg);
 }
 
 void AMController::logLn(long msg)
 {
-   write_message("$DLN$", msg);
+    write_message("$DLN$", msg);
 }
 
 void AMController::logLn(unsigned long msg)
 {
-   write_message("$DLN$", msg);
+    write_message("$DLN$", msg);
 }
 
 void AMController::logLn(float msg)
 {
-   write_message("$DLN$", msg);
+    write_message("$DLN$", msg);
 }
 
 void AMController::logLn(const char *msg)
 {
-   write_message("$DLN$", msg);
+    write_message("$DLN$", msg);
 }
 
 void AMController::log_labels(const char *variable, const char *label1)
 {
-   sd_manager->sd_log_labels(variable, label1, NULL, NULL, NULL, NULL);
+    sd_manager->sd_log_labels(variable, label1, NULL, NULL, NULL, NULL);
 }
 
 void AMController::log_labels(const char *variable, const char *label1, const char *label2)
 {
-   sd_manager->sd_log_labels(variable, label1, label2, NULL, NULL, NULL);
+    sd_manager->sd_log_labels(variable, label1, label2, NULL, NULL, NULL);
 }
 
 void AMController::log_labels(const char *variable, const char *label1, const char *label2, const char *label3)
 {
-   sd_manager->sd_log_labels(variable, label1, label2, label3, NULL, NULL);
+    sd_manager->sd_log_labels(variable, label1, label2, label3, NULL, NULL);
 }
 
 void AMController::log_labels(const char *variable, const char *label1, const char *label2, const char *label3, const char *label4)
 {
-   sd_manager->sd_log_labels(variable, label1, label2, label3, label4, NULL);
+    sd_manager->sd_log_labels(variable, label1, label2, label3, label4, NULL);
 }
 
 void AMController::log_labels(const char *variable, const char *label1, const char *label2, const char *label3, const char *label4, const char *label5)
 {
-   sd_manager->sd_log_labels(variable, label1, label2, label3, label4, label5);
+    sd_manager->sd_log_labels(variable, label1, label2, label3, label4, label5);
 }
 
 void AMController::log_value(const char *variable, unsigned long time, float v1)
 {
-   sd_manager->log_value(variable, time, v1);
+    sd_manager->log_value(variable, time, v1);
 }
 
 void AMController::log_value(const char *variable, unsigned long time, float v1, float v2)
 {
-   sd_manager->log_value(variable, time, v1, v2);
+    sd_manager->log_value(variable, time, v1, v2);
 }
 
 void AMController::log_value(const char *variable, unsigned long time, float v1, float v2, float v3)
 {
-   sd_manager->log_value(variable, time, v1, v2, v3);
+    sd_manager->log_value(variable, time, v1, v2, v3);
 }
 
 void AMController::log_value(const char *variable, unsigned long time, float v1, float v2, float v3, float v4)
 {
-   sd_manager->log_value(variable, time, v1, v2, v3, v4);
+    sd_manager->log_value(variable, time, v1, v2, v3, v4);
 }
 
 void AMController::log_value(const char *variable, unsigned long time, float v1, float v2, float v3, float v4, float v5)
 {
-   sd_manager->log_value(variable, time, v1, v2, v3, v4, v5);
+    sd_manager->log_value(variable, time, v1, v2, v3, v4, v5);
 }
 
 unsigned long AMController::log_size(const char *variable)
 {
-   return sd_manager->sd_log_size(variable);
+    return sd_manager->sd_log_size(variable);
 }
 
 void AMController::log_purge_data(const char *variable)
 {
-   sd_manager->sd_purge_data(variable);
+    sd_manager->sd_purge_data(variable);
 }
 
 void AMController::gpio_temporary_put(uint pin, bool value, uint ms)
 {
-   bool previousValue = gpio_get(pin);
+    bool previousValue = gpio_get(pin);
 
-   gpio_put(pin, value);
-   sleep_ms(ms);
-   gpio_put(pin, previousValue);
+    gpio_put(pin, value);
+    sleep_ms(ms);
+    gpio_put(pin, previousValue);
 }
