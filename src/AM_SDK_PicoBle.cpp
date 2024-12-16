@@ -53,8 +53,8 @@ void AMController::init(
     this->deviceDisconnected = deviceDisconnected;
     this->processAlarms = processAlarms;
 
-    state.is_device_connected = false;
-    state.is_sync_completed = false;
+    is_device_connected = false;
+    is_sync_completed = false;
 
     l2cap_init();
     sm_init();
@@ -111,7 +111,7 @@ void AMController::init(
     {
         doWork();
 
-        if (state.is_device_connected & state.is_sync_completed)
+        if (is_device_connected & is_sync_completed)
         {
             processOutgoingMessages();
         }
@@ -293,7 +293,7 @@ void AMController::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
 
     case ATT_EVENT_CONNECTED:
         DEBUG_printf("ATT_EVENT_CONNECTED\n");
-        state.is_device_connected = true;
+        is_device_connected = true;
         if (deviceConnected != NULL)
         {
             deviceConnected();
@@ -302,7 +302,7 @@ void AMController::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
 
     case ATT_EVENT_DISCONNECTED:
         DEBUG_printf("ATT_EVENT_DISCONNECTED\n");
-        state.is_device_connected = false;
+        is_device_connected = false;
         if (deviceDisconnected != NULL)
         {
             deviceDisconnected();
@@ -353,7 +353,7 @@ void AMController::process_received_buffer(char *buffer)
             {
                 // Process sync messages for the variable in value field
                 doSync();
-                state.is_sync_completed = true;
+                is_sync_completed = true;
             }
             else if (strcmp(variable, "$Time$") == 0)
             {

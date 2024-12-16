@@ -27,16 +27,16 @@
 
 #define BUF_SIZE 2048
 
-typedef struct TCP_SERVER_T_
-{
-    char buffer_to_send[BUF_SIZE];
-    char buffer_recv[BUF_SIZE];
-    int sent_len;
-    int recv_len;
-    bool is_device_connected;
-    bool is_sync_completed;
+// typedef struct TCP_SERVER_T_
+// {
+//     // char buffer_to_send[BUF_SIZE];
+//     // char buffer_recv[BUF_SIZE];
+//     // int sent_len;
+//     // int recv_len;
+//     bool is_device_connected;
+//     bool is_sync_completed;
 
-} TCP_SERVER_T;
+// } TCP_SERVER_T;
 
 // Create a struct for managing this service
 typedef struct
@@ -71,7 +71,8 @@ private:
     void (*deviceDisconnected)(void);                             // Pointer to the function called when a device disconnects from Arduino
     void (*processAlarms)(char *alarm);                           // Pointer to the function called when an alarm is fired
 
-    TCP_SERVER_T state;
+    bool is_device_connected;
+    bool is_sync_completed;
 
     char characteristic_d_rx[100];
     btstack_packet_callback_registration_t hci_event_callback_registration;
