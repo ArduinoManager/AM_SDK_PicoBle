@@ -1,12 +1,10 @@
 #include "AM_SDK_PicoBle.h"
 
-// #include "pico/stdlib.h"
 #include "pico/cyw43_arch.h"
 #include "btstack.h"
 #include "pico/time.h"
 
 #include "pico/util/datetime.h"
-#include "hardware/powman.h"
 #include "pico/aon_timer.h"
 
 #include "gap_configuration.h"
