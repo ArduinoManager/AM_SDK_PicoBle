@@ -31,9 +31,9 @@ https://github.com/carlk3/no-OS-FatFS-SD-SDIO-SPI-RPi-Pico
 2) Using the Raspberry Pico extension create a new Project:
 
     - Project Name: [Project Name]
-    - Board Type: Pico W
+    - Board Type: Pico W or Pico 2 W
     - Location: any folder of choice
-    - Pico SDK Version: 2.0.0 or greater
+    - Pico SDK Version: 2.1.0 or greater
     - Stdio Support: Console over UART, Console over USB or both, depending on your setup
     - Wireless Options: Pico W onboard LED
     - Generate C++ code
