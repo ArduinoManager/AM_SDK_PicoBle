@@ -1,8 +1,8 @@
-add_library(AM_SDK_PicoBle INTERFACE)
+add_library(AM_PicoBle INTERFACE)
 
 #pico_generate_pio_header(no-OS-FatFS-SD-SDIO-SPI-RPi-Pico ${CMAKE_CURRENT_LIST_DIR}/sd_driver/SDIO/rp2040_sdio.pio)
 
-target_compile_definitions(AM_SDK_PicoBle INTERFACE
+target_compile_definitions(AM_PicoBle INTERFACE
     PICO_MAX_SHARED_IRQ_HANDLERS=8u
 )
 # target_compile_options(no-OS-FatFS-SD-SDIO-SPI-RPi-Pico INTERFACE -ffile-prefix-map=${CMAKE_CURRENT_LIST_DIR}=)
@@ -16,7 +16,7 @@ target_sources(AM_SDK_PicoBle INTERFACE
 
 add_subdirectory(../../no-OS-FatFS-SD-SDIO-SPI-RPi-Pico/src build)
 
-target_include_directories(AM_SDK_PicoBle INTERFACE
+target_include_directories(AM_PicoBle INTERFACE
     include
     ${CMAKE_CURRENT_LIST_DIR}
     ${CMAKE_CURRENT_LIST_DIR}/build/build/generated/AM_SDK_PicoBle_gatt_header
@@ -30,10 +30,10 @@ target_link_libraries(
     no-OS-FatFS-SD-SDIO-SPI-RPi-Pico INTERFACE
 )
 
-pico_btstack_make_gatt_header(AM_SDK_PicoBle INTERFACE "${CMAKE_CURRENT_LIST_DIR}/gap_configuration.gatt")
+pico_btstack_make_gatt_header(AM_PicoBle INTERFACE "${CMAKE_CURRENT_LIST_DIR}/gap_configuration.gatt")
 
 
-target_compile_definitions(AM_SDK_PicoBle INTERFACE
+target_compile_definitions(AM_PicoBle INTERFACE
     #DEBUG         # Uncomment this line to debug the library
     #DUMP_ALARMS   # Uncomment this line to dump the alarms
     #DEBUG_SD      # Uncomment this line to debug SD Card operations
