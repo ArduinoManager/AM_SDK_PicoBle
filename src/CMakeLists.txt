@@ -7,7 +7,7 @@ target_compile_definitions(AM_PicoBle INTERFACE
 )
 # target_compile_options(no-OS-FatFS-SD-SDIO-SPI-RPi-Pico INTERFACE -ffile-prefix-map=${CMAKE_CURRENT_LIST_DIR}=)
 
-target_sources(AM_SDK_PicoBle INTERFACE
+target_sources(AM_PicoBle INTERFACE
     ${CMAKE_CURRENT_LIST_DIR}/AM_SDK_PicoBle.cpp
     ${CMAKE_CURRENT_LIST_DIR}/AM_SDManager.cpp
     ${CMAKE_CURRENT_LIST_DIR}/AM_Alarms.cpp
