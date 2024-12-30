@@ -27,17 +27,6 @@
 
 #define BUF_SIZE 2048
 
-// typedef struct TCP_SERVER_T_
-// {
-//     // char buffer_to_send[BUF_SIZE];
-//     // char buffer_recv[BUF_SIZE];
-//     // int sent_len;
-//     // int recv_len;
-//     bool is_device_connected;
-//     bool is_sync_completed;
-
-// } TCP_SERVER_T;
-
 // Create a struct for managing this service
 typedef struct
 {

@@ -77,7 +77,7 @@ void AMController::init(
     // ----------- Setup Time -----------
 
     struct tm d;
-    time_t epoch = 1733829472; // Tuesday, December 10, 2024 11:32:23 AM
+    time_t epoch = 2366696584; // Friday, December 30, 2044 7:43:04 AM
     memcpy(&d, gmtime(&epoch), sizeof(struct tm));
     aon_timer_start_calendar(&d);
 
