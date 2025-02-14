@@ -362,7 +362,9 @@ void AMController::process_received_buffer(char *buffer)
 
                 struct tm d1;
                 aon_timer_get_time_calendar(&d1);
-                DEBUG_printf("%s", asctime(&d1));
+                #ifdef DEBUG
+                    printf("%s", asctime(&d1));
+                #endif
             }
             else if (
                 (strcmp(variable, "$AlarmId$") == 0 || strcmp(variable, "$AlarmT$") == 0 || strcmp(variable, "$AlarmR$") == 0) &&
@@ -484,7 +486,7 @@ void AMController::write_message(const char *variable, float value)
     custom_service_t *instance = &service_object;
 
     // Update field value
-    sprintf(instance->characteristic_d_value, "%s=%.5f#", variable, value);
+    sprintf(instance->characteristic_d_value, "%s=%.5g#", variable, value);
 
     // Are notifications enabled? If so, register a callback
     if (instance->characteristic_d_client_configuration)
