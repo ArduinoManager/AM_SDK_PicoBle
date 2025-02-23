@@ -72,8 +72,8 @@ private:
     struct repeating_timer alarms_checks_timer;
     static bool alarm_timer_callback(__unused struct repeating_timer *t);
 
-    char log_file_to_send[128]; // Name of the log file to send
-    int log_file_read_bytes;    // Log file bytes already sent
+    char file_to_send[128]; // Name of the log file to send
+    int already_read_bytes;    // Log file bytes already sent
 
     bool send_log_file;     // Sending Log File
     bool send_dir;          // Sending SD file list

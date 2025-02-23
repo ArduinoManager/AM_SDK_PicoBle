@@ -107,44 +107,44 @@ void AMController::init(
     send_dir = false;
     send_log_file = false;
     send_file_content = false;
-    log_file_to_send[0] = '\0';
-    log_file_read_bytes = 0;
+    file_to_send[0] = '\0';
+    already_read_bytes = 0;
 
     while (true)
     {
         if (send_log_file)
         {
-            DEBUG_printf("Sending Logging file: %s\n", log_file_to_send);
-            int ret = sd_manager->sd_send_log_data(log_file_to_send, &log_file_read_bytes);
+            DEBUG_printf("Sending Logging file: %s\n", file_to_send);
+            int ret = sd_manager->sd_send_log_data(file_to_send, &already_read_bytes);
             if (ret == 0)
             {
                 send_log_file = false;
-                log_file_to_send[0] = '\0';
-                log_file_read_bytes = 0;
+                file_to_send[0] = '\0';
+                already_read_bytes = 0;
             }
         }
 
         if (send_dir)
         {
-            DEBUG_printf("Sending File List [last sent %s]\n", log_file_to_send);
-            int ret = sd_manager->dir(log_file_to_send);
+            DEBUG_printf("Sending File List [last sent %s]\n", file_to_send);
+            int ret = sd_manager->dir(file_to_send);
             if (ret == 0)
             {
-                log_file_to_send[0] = '\0';
-                log_file_read_bytes = 0;
+                file_to_send[0] = '\0';
+                already_read_bytes = 0;
                 send_dir = false;
             }
         }
 
         if (send_file_content)
         {
-            DEBUG_printf("Sending Content of File %s\n", log_file_to_send);
-            int ret = sd_manager->transmit_file(log_file_to_send, &log_file_read_bytes);
+            DEBUG_printf("Sending Content of File %s\n", file_to_send);
+            int ret = sd_manager->transmit_file(file_to_send, &already_read_bytes);
             if (ret == 0)
             {
                 send_file_content = false;
-                log_file_to_send[0] = '\0';
-                log_file_read_bytes = 0;
+                file_to_send[0] = '\0';
+                already_read_bytes = 0;
             }
         }
 
@@ -347,8 +347,8 @@ void AMController::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
         send_dir = false;
         send_file_content = false;
         send_log_file = false;
-        log_file_read_bytes = 0;
-        log_file_to_send[0] = '\0';        
+        already_read_bytes = 0;
+        file_to_send[0] = '\0';        
         if (deviceDisconnected != NULL)
         {
             deviceDisconnected();
@@ -424,14 +424,14 @@ void AMController::process_received_buffer(char *buffer)
             {
                 if (!send_dir && !send_log_file && !send_file_content)
                 {
-                    log_file_to_send[0] = '\0';
+                    file_to_send[0] = '\0';
                     send_dir = true;
                 }
             }
             else if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
             {
                 if (!send_file_content && !send_dir && !send_log_file) {
-                    strcpy(log_file_to_send, value);
+                    strcpy(file_to_send, value);
                     send_file_content = true;
                 }
             }
@@ -439,17 +439,17 @@ void AMController::process_received_buffer(char *buffer)
             {
                 if (!send_log_file && !send_dir && !send_file_content)
                 {
-                    strcpy(log_file_to_send, value);
+                    strcpy(file_to_send, value);
                     send_log_file = true;
                 }
             }
             else if (strcmp(variable, "$SDLogPurge$") == 0 && strlen(value) > 0)
             {
-                if (strlen(log_file_to_send) == 0)
+                if (!send_log_file && !send_dir && !send_file_content)
                 {
                     sd_manager->sd_purge_data_keeping_labels(value);
                     // This force sending the empty file to clear the Widget
-                    strcpy(log_file_to_send, value);
+                    strcpy(file_to_send, value);
                     send_log_file = true;
                 }
             }

@@ -30,8 +30,8 @@ public:
     void sd_purge_data(const char *variable);
     void sd_purge_data_keeping_labels(const char *variable);
 
-    int transmit_file(char *filename, int *log_file_read_bytes);
-    int sd_send_log_data(const char *value, int *log_file_read_bytes);
+    int transmit_file(char *filename, int *already_read_bytes);
+    int sd_send_log_data(const char *value, int *already_read_bytes);
 
     int dir(char *last_file_sent);
     

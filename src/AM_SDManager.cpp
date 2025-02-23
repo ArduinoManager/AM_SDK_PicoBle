@@ -96,7 +96,7 @@ int SDManager::dir(char *last_file_sent)
     return 0;
 }
 
-int SDManager::transmit_file(char *filename,  int *log_file_read_bytes)
+int SDManager::transmit_file(char *filename,  int *already_read_bytes)
 {
     FATFS fs;
     FRESULT fr;
@@ -122,11 +122,11 @@ int SDManager::transmit_file(char *filename,  int *log_file_read_bytes)
         return 0;
     }
 
-    if (*log_file_read_bytes == 0) {
+    if (*already_read_bytes == 0) {
         pico->write_message_immediate("SD", "$C$");
     }
     else {
-        f_lseek(&fil, *log_file_read_bytes);
+        f_lseek(&fil, *already_read_bytes);
     }
 
     //int chunk = 0;
@@ -152,7 +152,7 @@ int SDManager::transmit_file(char *filename,  int *log_file_read_bytes)
         }
 
         pico->notify_buffer(buffer, size);
-        *log_file_read_bytes += size;
+        *already_read_bytes += size;
     }
     pico->write_message_immediate("SD", "$E$");
 
@@ -478,7 +478,7 @@ void SDManager::sd_purge_data_keeping_labels(const char *variable)
     f_unmount("");
 }
 
-int SDManager::sd_send_log_data(const char *value, int *log_file_read_bytes)
+int SDManager::sd_send_log_data(const char *value, int *already_read_bytes)
 {
     DEBUG_printf("Sending Logging file for variable: %s\n", value);
 
@@ -513,16 +513,16 @@ int SDManager::sd_send_log_data(const char *value, int *log_file_read_bytes)
         return 0;
     }
 
-    if (*log_file_read_bytes > 0)
+    if (*already_read_bytes > 0)
     {
-        f_lseek(&fil, *log_file_read_bytes);
+        f_lseek(&fil, *already_read_bytes);
     }
 
     char line[128];
     while (!f_eof(&fil))
     {
         f_gets(line, 128, &fil);
-        *log_file_read_bytes += strlen(line);
+        *already_read_bytes += strlen(line);
         DEBUG_printf("%s\n", line);
 
         if (!pico->can_send_message())
