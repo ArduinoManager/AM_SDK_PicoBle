@@ -36,7 +36,7 @@ pico_btstack_make_gatt_header(AM_PicoBle INTERFACE "${CMAKE_CURRENT_LIST_DIR}/ga
 target_compile_definitions(AM_PicoBle INTERFACE
     DEBUG         # Uncomment this line to debug the library
     #DUMP_ALARMS   # Uncomment this line to dump the alarms
-    #DEBUG_SD      # Uncomment this line to debug SD Card operations
+    DEBUG_SD      # Uncomment this line to debug SD Card operations
 )
 
 

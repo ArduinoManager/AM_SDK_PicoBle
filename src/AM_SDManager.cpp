@@ -34,12 +34,13 @@ void SDManager::process_sd_request(char *variable, char *value)
 
     if (strcmp(variable, "SD") == 0)
     {
-        dir();
+        // dir();
     }
 
     if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
     {
-        if (!transmit_file(value)) {
+        if (!transmit_file(value))
+        {
             SD_DEBUG_printf("Error sending file");
         }
     }
@@ -48,12 +49,12 @@ void SDManager::process_sd_request(char *variable, char *value)
     {
         SD_DEBUG_printf("Purging %s\n", value);
         sd_purge_data_keeping_labels(value);
-        
+
         // sd_send_log_data(value);
     }
 }
 
-void SDManager::dir()
+int SDManager::dir(char *last_file_sent)
 {
     FATFS fs;
     FRESULT fr;
@@ -65,7 +66,7 @@ void SDManager::dir()
     if (fr != FR_OK)
     {
         SD_DEBUG_printf("SD not mounted - error: %s (%d)\n", FRESULT_str(fr), fr);
-        return;
+        return 0;
     }
 
     SD_DEBUG_printf("SD mounted\n");
@@ -74,14 +75,36 @@ void SDManager::dir()
     if (FR_OK != fr)
     {
         SD_DEBUG_printf("f_open(%s) error: %s (%d)\n", "/", FRESULT_str(fr), fr);
-        return;
+        return 0;
+    }
+
+    if (strlen(last_file_sent) > 0)
+    {
+        while (fr == FR_OK && fno.fname[0])
+        {
+            if (fno.fname[0] != '.' && endsWith(fno.fname, ".txt"))
+            {
+                if (strcmp(fno.fname, last_file_sent) == 0)
+                {
+                    break;
+                }
+                SD_DEBUG_printf("\nAlready Sent %s\n", fno.fname);
+            }
+            fr = f_findnext(&dir, &fno); /* Search for next item */
+        }
     }
 
     while (fr == FR_OK && fno.fname[0])
     {
         if (fno.fname[0] != '.' && endsWith(fno.fname, ".txt"))
         {
-            SD_DEBUG_printf("%s\n", fno.fname);
+            SD_DEBUG_printf("Sending %s\n", fno.fname);
+            if (!pico->can_send_message())
+            {
+                printf("CAZZOOOOOOOOOOOOO! [%s]\n", last_file_sent);
+                return -1;
+            }
+            strcpy(last_file_sent, fno.fname);
             pico->write_message_immediate("SD", fno.fname);
         }
         fr = f_findnext(&dir, &fno); /* Search for next item */
@@ -91,6 +114,8 @@ void SDManager::dir()
     f_closedir(&dir);
 
     f_unmount("");
+
+    return 0;
 }
 
 bool SDManager::transmit_file(char *filename)
@@ -432,7 +457,7 @@ void SDManager::sd_purge_data_keeping_labels(const char *variable)
     strcat(filename, variable);
     strcat(filename, ".txt");
 
-    fr = f_open(&fil, filename,FA_OPEN_EXISTING | FA_READ | FA_WRITE);
+    fr = f_open(&fil, filename, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
     if (fr != FR_OK)
     {
         SD_DEBUG_printf("Error opening file : %s (%d)\n", FRESULT_str(fr), fr);
@@ -462,7 +487,7 @@ void SDManager::sd_purge_data_keeping_labels(const char *variable)
 
 int SDManager::sd_send_log_data(const char *value, int *log_file_read_bytes)
 {
-    DEBUG_printf("Sending Logging file for variable: %s\n",value);
+    DEBUG_printf("Sending Logging file for variable: %s\n", value);
 
     FATFS fs;
     FRESULT fr;
@@ -495,7 +520,8 @@ int SDManager::sd_send_log_data(const char *value, int *log_file_read_bytes)
         return 0;
     }
 
-    if (*log_file_read_bytes>0) {
+    if (*log_file_read_bytes > 0)
+    {
         f_lseek(&fil, *log_file_read_bytes);
     }
 
