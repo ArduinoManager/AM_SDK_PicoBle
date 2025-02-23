@@ -39,10 +39,10 @@ void SDManager::process_sd_request(char *variable, char *value)
 
     if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
     {
-        if (!transmit_file(value))
-        {
-            SD_DEBUG_printf("Error sending file");
-        }
+        // if (!transmit_file(value))
+        // {
+        //     SD_DEBUG_printf("Error sending file");
+        // }
     }
 
     if (strcmp(variable, "$SDLogPurge$") == 0 && strlen(value) > 0)
@@ -88,7 +88,7 @@ int SDManager::dir(char *last_file_sent)
                 {
                     break;
                 }
-                SD_DEBUG_printf("\nAlready Sent %s\n", fno.fname);
+                SD_DEBUG_printf("\tAlready Sent %s\n", fno.fname);
             }
             fr = f_findnext(&dir, &fno); /* Search for next item */
         }
@@ -98,7 +98,7 @@ int SDManager::dir(char *last_file_sent)
     {
         if (fno.fname[0] != '.' && endsWith(fno.fname, ".txt"))
         {
-            SD_DEBUG_printf("Sending %s\n", fno.fname);
+            SD_DEBUG_printf("Dir - Sending %s\n", fno.fname);
             if (!pico->can_send_message())
             {
                 SD_DEBUG_printf("File cannot be sent [Last Sent: %s]\n", last_file_sent);
@@ -109,16 +109,21 @@ int SDManager::dir(char *last_file_sent)
         }
         fr = f_findnext(&dir, &fno); /* Search for next item */
     }
-    pico->write_message_immediate("SD", "$EFL$");
+
+    if (!pico->can_send_message()) {
+        return -1;
+    }
+
+    SD_DEBUG_printf("Dir - Sending end of list\n");
+    pico->notifiy_message("SD", "$EFL$");
 
     f_closedir(&dir);
-
     f_unmount("");
 
     return 0;
 }
 
-bool SDManager::transmit_file(char *filename)
+int SDManager::transmit_file(char *filename,  int *log_file_read_bytes)
 {
     FATFS fs;
     FRESULT fr;
@@ -134,19 +139,24 @@ bool SDManager::transmit_file(char *filename)
     if (fr != FR_OK)
     {
         SD_DEBUG_printf("Device not mounted - error: %s (%d)\n", FRESULT_str(fr), fr);
-        return false;
+        return 0;
     }
 
     fr = f_open(&fil, filename, FA_OPEN_EXISTING | FA_READ);
     if (fr != FR_OK)
     {
         SD_DEBUG_printf("Error opening file %s - error: %s (%d)\n", filename, FRESULT_str(fr), fr);
-        return false;
+        return 0;
     }
 
-    pico->write_message_immediate("SD", "$C$");
+    if (*log_file_read_bytes == 0) {
+        pico->write_message_immediate("SD", "$C$");
+    }
+    else {
+        f_lseek(&fil, *log_file_read_bytes);
+    }
 
-    int chunk = 0;
+    //int chunk = 0;
     while (!f_eof(&fil))
     {
         uint size;
@@ -156,10 +166,20 @@ bool SDManager::transmit_file(char *filename)
             f_close(&fil);
             f_unmount("");
 
-            return false;
+            return 0;
         }
-        SD_DEBUG_printf("Chunk %d\n", chunk++);
-        pico->write_message_buffer(buffer, size);
+        SD_DEBUG_printf("\tBuffer %s\n", buffer);
+
+        if (!pico->can_send_message())
+        {
+            DEBUG_printf("File %s not yet completed\n", filename);
+            f_close(&fil);
+            f_unmount("");
+            return -1;
+        }
+
+        pico->notify_buffer(buffer, size);
+        *log_file_read_bytes += size;
     }
     pico->write_message_immediate("SD", "$E$");
 
@@ -168,7 +188,7 @@ bool SDManager::transmit_file(char *filename)
     f_close(&fil);
     f_unmount("");
 
-    return true;
+    return 0;
 }
 
 // Is this used somewhere?

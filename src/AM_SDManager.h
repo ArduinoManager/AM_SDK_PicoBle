@@ -31,6 +31,8 @@ public:
     FSIZE_t sd_log_size(const char *variable);
     void sd_purge_data(const char *variable);
     void sd_purge_data_keeping_labels(const char *variable);
+
+    int transmit_file(char *filename, int *log_file_read_bytes);
     int sd_send_log_data(const char *value, int *log_file_read_bytes);
 
     int dir(char *last_file_sent);
@@ -39,7 +41,7 @@ private:
     AMController *pico;
 
     bool endsWith(const char *base, const char *str); 
-    bool transmit_file(char *filename);
+   
 
     void log_values(const char *variable, unsigned long time, float *v1, float *v2, float *v3, float *v4, float *v5);
 };

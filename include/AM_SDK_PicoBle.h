@@ -75,9 +75,9 @@ private:
     char log_file_to_send[128]; // Name of the log file to send
     int log_file_read_bytes;    // Log file bytes already sent
 
-    bool send_log_file; // Sending Log File
-    bool send_dir; // Sending SD file list
-
+    bool send_log_file;     // Sending Log File
+    bool send_dir;          // Sending SD file list
+    bool send_file_content; // Sending file content
 
 public:
     void init(
@@ -96,6 +96,7 @@ public:
     void write_message(const char *variable, const char *value);
     void write_message_immediate(const char *variable, const char *value);
     void notifiy_message(const char *variable, const char *value);
+    void notify_buffer(const char *value, uint size);
     void write_message_buffer(const char *value, uint size);
     int can_send_message();
 

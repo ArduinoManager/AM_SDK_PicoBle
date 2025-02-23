@@ -106,6 +106,7 @@ void AMController::init(
     f_unmount("");
     send_dir = false;
     send_log_file = false;
+    send_file_content = false;
     log_file_to_send[0] = '\0';
     log_file_read_bytes = 0;
 
@@ -130,7 +131,20 @@ void AMController::init(
             if (ret == 0)
             {
                 log_file_to_send[0] = '\0';
+                log_file_read_bytes = 0;
                 send_dir = false;
+            }
+        }
+
+        if (send_file_content)
+        {
+            DEBUG_printf("Sending Content of File %s\n", log_file_to_send);
+            int ret = sd_manager->transmit_file(log_file_to_send, &log_file_read_bytes);
+            if (ret == 0)
+            {
+                send_file_content = false;
+                log_file_to_send[0] = '\0';
+                log_file_read_bytes = 0;
             }
         }
 
@@ -138,7 +152,9 @@ void AMController::init(
 
         if (is_device_connected & is_sync_completed)
         {
-            processOutgoingMessages();
+            if (!send_dir && !send_log_file && !send_file_content) {
+                processOutgoingMessages();
+            }
         }
 
 #if PICO_CYW43_ARCH_POLL
@@ -325,8 +341,14 @@ void AMController::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
         break;
 
     case ATT_EVENT_DISCONNECTED:
-        DEBUG_printf("ATT_EVENT_DISCONNECTED\n");
+        DEBUG_printf("ATT_EVENT_DISCONNECTED\n");        
         is_device_connected = false;
+        // Just in case ...
+        send_dir = false;
+        send_file_content = false;
+        send_log_file = false;
+        log_file_read_bytes = 0;
+        log_file_to_send[0] = '\0';        
         if (deviceDisconnected != NULL)
         {
             deviceDisconnected();
@@ -400,7 +422,7 @@ void AMController::process_received_buffer(char *buffer)
             }
             else if (strcmp(variable, "SD") == 0 && strlen(value) > 0)
             {
-                if (!send_dir && !send_log_file)
+                if (!send_dir && !send_log_file && !send_file_content)
                 {
                     log_file_to_send[0] = '\0';
                     send_dir = true;
@@ -408,14 +430,14 @@ void AMController::process_received_buffer(char *buffer)
             }
             else if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
             {
+                if (!send_file_content && !send_dir && !send_log_file) {
+                    strcpy(log_file_to_send, value);
+                    send_file_content = true;
+                }
             }
-            // else if ((strcmp(variable, "SD") == 0 || strcmp(variable, "$SDDL$") == 0) && strlen(value) > 0)
-            // {
-            //     sd_manager->process_sd_request(variable, value);
-            // }
             else if (strcmp(variable, "$SDLogData$") == 0 && strlen(value) > 0)
             {
-                if (!send_log_file && !send_dir)
+                if (!send_log_file && !send_dir && !send_file_content)
                 {
                     strcpy(log_file_to_send, value);
                     send_log_file = true;
@@ -603,6 +625,15 @@ void AMController::notifiy_message(const char *variable, const char *value)
 
     sprintf(instance->characteristic_d_value, "%s=%s#", variable, value);
     att_server_notify(instance->con_handle, instance->characteristic_d_handle, reinterpret_cast<uint8_t *>(instance->characteristic_d_value), strlen(instance->characteristic_d_value));
+}
+
+void AMController::notify_buffer(const char *value, uint size)
+{
+    // Pointer to our service object
+    custom_service_t *instance = &service_object;
+
+    sprintf(instance->characteristic_d_value, "%s", value);
+    att_server_notify(instance->con_handle, instance->characteristic_d_handle, reinterpret_cast<uint8_t *>(instance->characteristic_d_value), size);
 }
 
 void AMController::write_message_buffer(const char *value, uint size)
