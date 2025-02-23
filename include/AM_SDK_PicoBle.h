@@ -72,6 +72,10 @@ private:
     struct repeating_timer alarms_checks_timer;
     static bool alarm_timer_callback(__unused struct repeating_timer *t);
 
+    //
+    char log_file_to_send[128];
+    int log_file_read_bytes;
+
 public:
     void init(
         void (*doWork)(void),
@@ -138,6 +142,8 @@ private:
     static void characteristic_d_callback(void *context);
 
     void process_received_buffer(char *buffer);
+
+    int send_log_file(char *name);
 };
 
 #endif

@@ -104,9 +104,24 @@ void AMController::init(
     }
 
     f_unmount("");
+    log_file_to_send[0] = '\0';
+    log_file_read_bytes = 0;
 
     while (true)
     {
+        if (strlen(log_file_to_send) > 0) {
+            printf("Sending Logging file: %s\n",log_file_to_send);
+
+            int ret = send_log_file(log_file_to_send);
+            
+            if (ret == 0) {
+                log_file_to_send[0] = '\0';
+                log_file_read_bytes = 0;
+            }
+
+        }
+
+
         doWork();
 
         if (is_device_connected & is_sync_completed)
@@ -125,14 +140,81 @@ void AMController::init(
         // if you are not using pico_cyw43_arch_poll, then WiFI driver and lwIP work
         // is done via interrupt in the background. This sleep is just an example of some (blocking)
         // work you might be doing.
-        sleep_ms(2000);
+        sleep_ms(500);
 #endif
     }
 }
 
+int AMController::send_log_file(char *name) {
+    DEBUG_printf("Sending Logging file for variable: %s\n",name);
+
+    FATFS fs;
+    FRESULT fr;
+    DIR dir;
+    FILINFO fno;
+    FRESULT res;
+    FIL fil;
+
+    fr = f_mount(&fs, "", 1);
+    if (fr != FR_OK)
+    {
+        DEBUG_printf("Device not mounted - error: %s (%d)\n", FRESULT_str(fr), fr);
+        this->write_message_immediate(name, "");
+        return 0;
+    }
+
+    char filename[64];
+    strcpy(filename, "/");
+    strcat(filename, name);
+    strcat(filename, ".txt");
+
+    DEBUG_printf("Sending File %s\n", filename);
+
+    fr = f_open(&fil, filename, FA_OPEN_EXISTING | FA_READ);
+    if (fr != FR_OK)
+    {
+        DEBUG_printf("Error opening file : %s (%d)\n", FRESULT_str(fr), fr);
+        this->write_message_immediate(name, "");
+        f_unmount("");
+        return 0;
+    }
+
+    if (log_file_read_bytes>0) {
+        f_lseek(&fil, log_file_read_bytes);
+    }
+
+    custom_service_t *instance = &service_object;
+
+    char line[128];
+    while (!f_eof(&fil))
+    {
+        f_gets(line, 128, &fil);
+        log_file_read_bytes += strlen(line);
+        DEBUG_printf("%s\n", line);
+
+        if (!att_server_can_send_packet_now(instance->con_handle))
+        {
+            DEBUG_printf("File %s not yet completed\n", filename);
+            f_close(&fil);
+            f_unmount("");
+            return -1;
+        }
+
+        sprintf(instance->characteristic_d_value, "%s=%s#", name, line);
+        att_server_notify(instance->con_handle, instance->characteristic_d_handle, reinterpret_cast<uint8_t *>(instance->characteristic_d_value), strlen(instance->characteristic_d_value));
+    }
+
+    this->write_message_immediate(name, "");
+    f_close(&fil);
+    f_unmount("");
+
+    DEBUG_printf("File %s sent\n", filename);
+
+    return 0;
+}
+
 void AMController::custom_service_server_init(char *d_ptr)
 {
-
     // Pointer to our service object
     custom_service_t *instance = &service_object;
 
@@ -378,7 +460,8 @@ void AMController::process_received_buffer(char *buffer)
             }
             else if (strcmp(variable, "$SDLogData$") == 0 && strlen(value) > 0)
             {
-                sd_manager->sd_send_log_data(value);
+                strcpy(log_file_to_send, value);
+                //sd_manager->sd_send_log_data(value);
             }
             else if (strcmp(variable, "$SDLogPurge$") == 0 && strlen(value) > 0)
             {
