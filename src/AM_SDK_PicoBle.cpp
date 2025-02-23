@@ -104,26 +104,32 @@ void AMController::init(
     }
 
     f_unmount("");
+    send_dir = false;
+    send_log_file = false;
     log_file_to_send[0] = '\0';
     log_file_read_bytes = 0;
 
     while (true)
     {
-        if (strlen(log_file_to_send) > 0 && !send_dir)
+        if (send_log_file)
         {
             DEBUG_printf("Sending Logging file: %s\n", log_file_to_send);
             int ret = sd_manager->sd_send_log_data(log_file_to_send, &log_file_read_bytes);
             if (ret == 0)
             {
+                send_log_file = false;
                 log_file_to_send[0] = '\0';
                 log_file_read_bytes = 0;
             }
         }
 
-        if (send_dir) {
+        if (send_dir)
+        {
             DEBUG_printf("Sending File List [last sent %s]\n", log_file_to_send);
             int ret = sd_manager->dir(log_file_to_send);
-            if (ret == 0) {
+            if (ret == 0)
+            {
+                log_file_to_send[0] = '\0';
                 send_dir = false;
             }
         }
@@ -150,76 +156,6 @@ void AMController::init(
 #endif
     }
 }
-
-// int AMController::send_log_file(char *name)
-// {
-//     DEBUG_printf("Sending Logging file for variable: %s\n", name);
-
-//     FATFS fs;
-//     FRESULT fr;
-//     DIR dir;
-//     FILINFO fno;
-//     FRESULT res;
-//     FIL fil;
-
-//     fr = f_mount(&fs, "", 1);
-//     if (fr != FR_OK)
-//     {
-//         DEBUG_printf("Device not mounted - error: %s (%d)\n", FRESULT_str(fr), fr);
-//         this->write_message_immediate(name, "");
-//         return 0;
-//     }
-
-//     char filename[64];
-//     strcpy(filename, "/");
-//     strcat(filename, name);
-//     strcat(filename, ".txt");
-
-//     DEBUG_printf("Sending File %s\n", filename);
-
-//     fr = f_open(&fil, filename, FA_OPEN_EXISTING | FA_READ);
-//     if (fr != FR_OK)
-//     {
-//         DEBUG_printf("Error opening file : %s (%d)\n", FRESULT_str(fr), fr);
-//         this->write_message_immediate(name, "");
-//         f_unmount("");
-//         return 0;
-//     }
-
-//     if (log_file_read_bytes > 0)
-//     {
-//         f_lseek(&fil, log_file_read_bytes);
-//     }
-
-//     custom_service_t *instance = &service_object;
-
-//     char line[128];
-//     while (!f_eof(&fil))
-//     {
-//         f_gets(line, 128, &fil);
-//         log_file_read_bytes += strlen(line);
-//         DEBUG_printf("%s\n", line);
-
-//         if (!att_server_can_send_packet_now(instance->con_handle))
-//         {
-//             DEBUG_printf("File %s not yet completed\n", filename);
-//             f_close(&fil);
-//             f_unmount("");
-//             return -1;
-//         }
-
-//         sprintf(instance->characteristic_d_value, "%s=%s#", name, line);
-//         att_server_notify(instance->con_handle, instance->characteristic_d_handle, reinterpret_cast<uint8_t *>(instance->characteristic_d_value), strlen(instance->characteristic_d_value));
-//     }
-
-//     this->write_message_immediate(name, "");
-//     f_close(&fil);
-//     f_unmount("");
-
-//     DEBUG_printf("File %s sent\n", filename);
-
-//     return 0;
-// }
 
 void AMController::custom_service_server_init(char *d_ptr)
 {
@@ -462,13 +398,16 @@ void AMController::process_received_buffer(char *buffer)
             {
                 alarms.process_alarm_request(variable, value);
             }
-            else if (strcmp(variable, "SD") == 0 && strlen(value) > 0) {
-                if (!send_dir && strlen(log_file_to_send) == 0) {                    
+            else if (strcmp(variable, "SD") == 0 && strlen(value) > 0)
+            {
+                if (!send_dir && !send_log_file)
+                {
+                    log_file_to_send[0] = '\0';
                     send_dir = true;
                 }
             }
-            else if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0) {
-
+            else if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
+            {
             }
             // else if ((strcmp(variable, "SD") == 0 || strcmp(variable, "$SDDL$") == 0) && strlen(value) > 0)
             // {
@@ -476,9 +415,10 @@ void AMController::process_received_buffer(char *buffer)
             // }
             else if (strcmp(variable, "$SDLogData$") == 0 && strlen(value) > 0)
             {
-                if (strlen(log_file_to_send) == 0 && !send_dir)
+                if (!send_log_file && !send_dir)
                 {
                     strcpy(log_file_to_send, value);
+                    send_log_file = true;
                 }
             }
             else if (strcmp(variable, "$SDLogPurge$") == 0 && strlen(value) > 0)
@@ -488,6 +428,7 @@ void AMController::process_received_buffer(char *buffer)
                     sd_manager->process_sd_request(variable, value);
                     // This force sending the empty file to clear the Widget
                     strcpy(log_file_to_send, value);
+                    send_log_file = true;
                 }
             }
             else

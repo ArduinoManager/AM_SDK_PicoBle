@@ -101,7 +101,7 @@ int SDManager::dir(char *last_file_sent)
             SD_DEBUG_printf("Sending %s\n", fno.fname);
             if (!pico->can_send_message())
             {
-                printf("CAZZOOOOOOOOOOOOO! [%s]\n", last_file_sent);
+                SD_DEBUG_printf("File cannot be sent [Last Sent: %s]\n", last_file_sent);
                 return -1;
             }
             strcpy(last_file_sent, fno.fname);

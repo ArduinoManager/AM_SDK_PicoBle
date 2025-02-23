@@ -75,6 +75,7 @@ private:
     char log_file_to_send[128]; // Name of the log file to send
     int log_file_read_bytes;    // Log file bytes already sent
 
+    bool send_log_file; // Sending Log File
     bool send_dir; // Sending SD file list
 
 
@@ -146,8 +147,6 @@ private:
     static void characteristic_d_callback(void *context);
 
     void process_received_buffer(char *buffer);
-
-    //int send_log_file(char *name);
 };
 
 #endif
