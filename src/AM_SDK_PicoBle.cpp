@@ -447,7 +447,7 @@ void AMController::process_received_buffer(char *buffer)
             {
                 if (strlen(log_file_to_send) == 0)
                 {
-                    sd_manager->process_sd_request(variable, value);
+                    sd_manager->sd_purge_data_keeping_labels(value);
                     // This force sending the empty file to clear the Widget
                     strcpy(log_file_to_send, value);
                     send_log_file = true;

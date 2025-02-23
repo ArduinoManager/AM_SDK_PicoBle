@@ -17,8 +17,6 @@ class SDManager
 public:
     SDManager(AMController *p);
 
-    void process_sd_request(char *variable, char *value);
-
     // void deleteFile(char *filename);
     bool append(char *filename, uint8_t *byte, unsigned int size);
 

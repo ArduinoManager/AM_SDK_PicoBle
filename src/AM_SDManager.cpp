@@ -27,33 +27,6 @@ bool SDManager::endsWith(const char *base, const char *str)
     return false;
 }
 
-void SDManager::process_sd_request(char *variable, char *value)
-{
-    SD_DEBUG_printf("** processSD **\n");
-    SD_DEBUG_printf("\tVariable %s - Value %s\n", variable, value);
-
-    if (strcmp(variable, "SD") == 0)
-    {
-        // dir();
-    }
-
-    if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
-    {
-        // if (!transmit_file(value))
-        // {
-        //     SD_DEBUG_printf("Error sending file");
-        // }
-    }
-
-    if (strcmp(variable, "$SDLogPurge$") == 0 && strlen(value) > 0)
-    {
-        SD_DEBUG_printf("Purging %s\n", value);
-        sd_purge_data_keeping_labels(value);
-
-        // sd_send_log_data(value);
-    }
-}
-
 int SDManager::dir(char *last_file_sent)
 {
     FATFS fs;
