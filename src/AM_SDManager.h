@@ -31,7 +31,7 @@ public:
     FSIZE_t sd_log_size(const char *variable);
     void sd_purge_data(const char *variable);
     void sd_purge_data_keeping_labels(const char *variable);
-    void sd_send_log_data(const char *value);
+    int sd_send_log_data(const char *value, int *log_file_read_bytes);
 
 private:
     AMController *pico;

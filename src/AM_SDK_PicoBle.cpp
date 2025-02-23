@@ -109,18 +109,20 @@ void AMController::init(
 
     while (true)
     {
-        if (strlen(log_file_to_send) > 0) {
-            printf("Sending Logging file: %s\n",log_file_to_send);
+        if (strlen(log_file_to_send) > 0)
+        {
+            printf("Sending Logging file: %s\n", log_file_to_send);
 
-            int ret = send_log_file(log_file_to_send);
-            
-            if (ret == 0) {
+            // int ret = send_log_file(log_file_to_send);
+
+            int ret = sd_manager->sd_send_log_data(log_file_to_send, &log_file_read_bytes);
+
+            if (ret == 0)
+            {
                 log_file_to_send[0] = '\0';
                 log_file_read_bytes = 0;
             }
-
         }
-
 
         doWork();
 
@@ -145,8 +147,9 @@ void AMController::init(
     }
 }
 
-int AMController::send_log_file(char *name) {
-    DEBUG_printf("Sending Logging file for variable: %s\n",name);
+int AMController::send_log_file(char *name)
+{
+    DEBUG_printf("Sending Logging file for variable: %s\n", name);
 
     FATFS fs;
     FRESULT fr;
@@ -179,7 +182,8 @@ int AMController::send_log_file(char *name) {
         return 0;
     }
 
-    if (log_file_read_bytes>0) {
+    if (log_file_read_bytes > 0)
+    {
         f_lseek(&fil, log_file_read_bytes);
     }
 
@@ -444,9 +448,9 @@ void AMController::process_received_buffer(char *buffer)
 
                 struct tm d1;
                 aon_timer_get_time_calendar(&d1);
-                #ifdef DEBUG
-                    printf("%s", asctime(&d1));
-                #endif
+#ifdef DEBUG
+                printf("%s", asctime(&d1));
+#endif
             }
             else if (
                 (strcmp(variable, "$AlarmId$") == 0 || strcmp(variable, "$AlarmT$") == 0 || strcmp(variable, "$AlarmR$") == 0) &&
@@ -460,12 +464,19 @@ void AMController::process_received_buffer(char *buffer)
             }
             else if (strcmp(variable, "$SDLogData$") == 0 && strlen(value) > 0)
             {
-                strcpy(log_file_to_send, value);
-                //sd_manager->sd_send_log_data(value);
+                if (strlen(log_file_to_send) == 0)
+                {
+                    strcpy(log_file_to_send, value);
+                }
             }
             else if (strcmp(variable, "$SDLogPurge$") == 0 && strlen(value) > 0)
             {
-                sd_manager->process_sd_request(variable, value);
+                if (strlen(log_file_to_send) == 0)
+                {
+                    sd_manager->process_sd_request(variable, value);
+                    // This force sending the empty file to clear the Widget
+                    strcpy(log_file_to_send, value);
+                }
             }
             else
             {
@@ -624,6 +635,21 @@ void AMController::write_message_immediate(const char *variable, const char *val
         instance->callback_d.context = (void *)instance;
         att_server_register_can_send_now_callback(&instance->callback_d, instance->con_handle);
     }
+}
+
+int AMController::can_send_message()
+{
+    custom_service_t *instance = &service_object;
+    return att_server_can_send_packet_now(instance->con_handle);
+}
+
+void AMController::notifiy_message(const char *variable, const char *value)
+{
+    // Pointer to our service object
+    custom_service_t *instance = &service_object;
+
+    sprintf(instance->characteristic_d_value, "%s=%s#", variable, value);
+    att_server_notify(instance->con_handle, instance->characteristic_d_handle, reinterpret_cast<uint8_t *>(instance->characteristic_d_value), strlen(instance->characteristic_d_value));
 }
 
 void AMController::write_message_buffer(const char *value, uint size)

@@ -48,7 +48,8 @@ void SDManager::process_sd_request(char *variable, char *value)
     {
         SD_DEBUG_printf("Purging %s\n", value);
         sd_purge_data_keeping_labels(value);
-        sd_send_log_data(value);
+        
+        // sd_send_log_data(value);
     }
 }
 
@@ -459,8 +460,10 @@ void SDManager::sd_purge_data_keeping_labels(const char *variable)
     f_unmount("");
 }
 
-void SDManager::sd_send_log_data(const char *value)
+int SDManager::sd_send_log_data(const char *value, int *log_file_read_bytes)
 {
+    DEBUG_printf("Sending Logging file for variable: %s\n",value);
+
     FATFS fs;
     FRESULT fr;
     DIR dir;
@@ -473,7 +476,7 @@ void SDManager::sd_send_log_data(const char *value)
     {
         SD_DEBUG_printf("Device not mounted - error: %s (%d)\n", FRESULT_str(fr), fr);
         pico->write_message_immediate(value, "");
-        return;
+        return 0;
     }
 
     char filename[64];
@@ -489,16 +492,29 @@ void SDManager::sd_send_log_data(const char *value)
         SD_DEBUG_printf("Error opening file : %s (%d)\n", FRESULT_str(fr), fr);
         pico->write_message_immediate(value, "");
         f_unmount("");
-        return;
+        return 0;
+    }
+
+    if (*log_file_read_bytes>0) {
+        f_lseek(&fil, *log_file_read_bytes);
     }
 
     char line[128];
-
     while (!f_eof(&fil))
     {
         f_gets(line, 128, &fil);
-        SD_DEBUG_printf("%s\n", line);
-        pico->write_message_immediate(value, line);
+        *log_file_read_bytes += strlen(line);
+        DEBUG_printf("%s\n", line);
+
+        if (!pico->can_send_message())
+        {
+            DEBUG_printf("File %s not yet completed\n", filename);
+            f_close(&fil);
+            f_unmount("");
+            return -1;
+        }
+
+        pico->notifiy_message(value, line);
     }
 
     pico->write_message_immediate(value, "");
@@ -506,4 +522,6 @@ void SDManager::sd_send_log_data(const char *value)
     f_unmount("");
 
     SD_DEBUG_printf("File %s sent\n", filename);
+
+    return 0;
 }

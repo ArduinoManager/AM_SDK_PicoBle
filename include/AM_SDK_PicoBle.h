@@ -92,7 +92,9 @@ public:
     void write_message(const char *variable, float value);
     void write_message(const char *variable, const char *value);
     void write_message_immediate(const char *variable, const char *value);
+    void notifiy_message(const char *variable, const char *value);
     void write_message_buffer(const char *value, uint size);
+    int can_send_message();
 
     void write_message(const char *variable, float x, float y, float z);
 
