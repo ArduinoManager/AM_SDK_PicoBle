@@ -90,7 +90,7 @@ void AMController::init(
     FRESULT fr = f_mount(&fs, "", 1);
     if (FR_OK == fr)
     {
-        DEBUG_printf("SD Card mounted!\n");
+        printf("SD Card mounted!\n");
         if (processAlarms != NULL)
         {
             // Initialize Alarms
@@ -152,7 +152,8 @@ void AMController::init(
 
         if (is_device_connected & is_sync_completed)
         {
-            if (!send_dir && !send_log_file && !send_file_content) {
+            if (!send_dir && !send_log_file && !send_file_content)
+            {
                 processOutgoingMessages();
             }
         }
@@ -271,7 +272,7 @@ int AMController::custom_service_write_callback(hci_con_handle_t con_handle, uin
         {
             instance->callback_d.callback = &characteristic_d_callback;
             instance->callback_d.context = (void *)instance;
-            att_server_register_can_send_now_callback(&instance->callback_d, instance->con_handle);
+            //att_server_register_can_send_now_callback(&instance->callback_d, instance->con_handle);
         }
         // Alert the application of a bluetooth RX
         // PT_SEM_SAFE_SIGNAL(pt, &BLUETOOTH_READY);
@@ -341,14 +342,14 @@ void AMController::packet_handler(uint8_t packet_type, uint16_t channel, uint8_t
         break;
 
     case ATT_EVENT_DISCONNECTED:
-        DEBUG_printf("ATT_EVENT_DISCONNECTED\n");        
+        DEBUG_printf("ATT_EVENT_DISCONNECTED\n");
         is_device_connected = false;
         // Just in case ...
         send_dir = false;
         send_file_content = false;
         send_log_file = false;
         already_read_bytes = 0;
-        file_to_send[0] = '\0';        
+        file_to_send[0] = '\0';
         if (deviceDisconnected != NULL)
         {
             deviceDisconnected();
@@ -430,7 +431,8 @@ void AMController::process_received_buffer(char *buffer)
             }
             else if (strcmp(variable, "$SDDL$") == 0 && strlen(value) > 0)
             {
-                if (!send_file_content && !send_dir && !send_log_file) {
+                if (!send_file_content && !send_dir && !send_log_file)
+                {
                     strcpy(file_to_send, value);
                     send_file_content = true;
                 }

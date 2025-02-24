@@ -78,7 +78,7 @@ int SDManager::dir(char *last_file_sent)
                 return -1;
             }
             strcpy(last_file_sent, fno.fname);
-            pico->write_message_immediate("SD", fno.fname);
+            pico->notifiy_message("SD",fno.fname);
         }
         fr = f_findnext(&dir, &fno); /* Search for next item */
     }
@@ -502,7 +502,7 @@ int SDManager::sd_send_log_data(const char *value, int *already_read_bytes)
     strcat(filename, value);
     strcat(filename, ".txt");
 
-    SD_DEBUG_printf("Sending File %s\n", filename);
+    SD_DEBUG_printf("Sending Log File %s\n", filename);
 
     fr = f_open(&fil, filename, FA_OPEN_EXISTING | FA_READ);
     if (fr != FR_OK)
@@ -540,7 +540,7 @@ int SDManager::sd_send_log_data(const char *value, int *already_read_bytes)
     f_close(&fil);
     f_unmount("");
 
-    SD_DEBUG_printf("File %s sent\n", filename);
+    SD_DEBUG_printf("Log File %s sent\n", filename);
 
     return 0;
 }
