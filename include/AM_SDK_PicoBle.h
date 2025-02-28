@@ -33,17 +33,19 @@ typedef struct
     // Connection handle for service
     hci_con_handle_t con_handle;
 
-    // Characteristic D information
+    // Characteristic information
     char *characteristic_d_value;
     uint16_t characteristic_d_client_configuration;
     char *characteristic_d_user_description;
 
-    // Characteristic D handles
+    // Characteristic handles
     uint16_t characteristic_d_handle;
     uint16_t characteristic_d_client_configuration_handle;
     uint16_t characteristic_d_user_description_handle;
 
     btstack_context_callback_registration_t callback_d;
+
+    char buffer[64];
 
 } custom_service_t;
 

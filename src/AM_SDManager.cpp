@@ -450,6 +450,8 @@ void SDManager::sd_purge_data_keeping_labels(const char *variable)
     strcat(filename, variable);
     strcat(filename, ".txt");
 
+    SD_DEBUG_printf("Purging Keeping Label for %s\n", filename);
+
     fr = f_open(&fil, filename, FA_OPEN_EXISTING | FA_READ | FA_WRITE);
     if (fr != FR_OK)
     {

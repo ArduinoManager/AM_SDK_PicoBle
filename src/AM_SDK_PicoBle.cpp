@@ -240,16 +240,16 @@ int AMController::static_custom_service_write_callback(hci_con_handle_t con_hand
     return 0; // Or an appropriate error code
 }
 
-int AMController::custom_service_write_callback(hci_con_handle_t con_handle, uint16_t attribute_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *buffer, uint16_t buffer_size)
+int AMController::custom_service_write_callback(hci_con_handle_t con_handle, uint16_t attribute_handle, uint16_t transaction_mode, uint16_t offset, uint8_t *received_buffer, uint16_t received_buffer_size)
 {
     UNUSED(transaction_mode);
     UNUSED(offset);
-    UNUSED(buffer_size);
+    UNUSED(received_buffer_size);
 
     // Enable/disable notificatins
     if (attribute_handle == service_object.characteristic_d_client_configuration_handle)
     {
-        service_object.characteristic_d_client_configuration = little_endian_read_16(buffer, 0);
+        service_object.characteristic_d_client_configuration = little_endian_read_16(received_buffer, 0);
         service_object.con_handle = con_handle;
     }
 
@@ -257,14 +257,36 @@ int AMController::custom_service_write_callback(hci_con_handle_t con_handle, uin
     if (attribute_handle == service_object.characteristic_d_handle)
     {
         custom_service_t *instance = &service_object;
-        buffer[buffer_size] = 0;
-        memset(service_object.characteristic_d_value, 0, sizeof(service_object.characteristic_d_value));
-        memcpy(service_object.characteristic_d_value, buffer, buffer_size);
+        received_buffer[received_buffer_size] = 0;
+
+        int len = 0;
+        for(int i=0; i<received_buffer_size; i++) {
+            if (received_buffer[i] == '\0') {
+                break;
+            }
+            len++;            
+        }
+        
+        if (received_buffer[len-1] != '#') {
+            DEBUG_printf("R >%s< [%d]\n",received_buffer,len);
+            strcat(service_object.buffer,(char *)received_buffer);
+            return 0;
+        }
+
+        strcat(service_object.buffer,(char *)received_buffer);
+
+        //memset(service_object.characteristic_d_value, 0, sizeof(service_object.characteristic_d_value));
+        //memcpy(service_object.characteristic_d_value, received_buffer, received_buffer_size);
 
         // Null-terminate the string
-        service_object.characteristic_d_value[buffer_size] = 0;
+        //service_object.characteristic_d_value[received_buffer_size] = 0;
+
+        strcpy(service_object.characteristic_d_value, service_object.buffer);
+        service_object.buffer[0] = '\0';
 
         DEBUG_printf("R >%s<\n", service_object.characteristic_d_value);
+
+        // Buffer is processed only if the buffer is something like <variable>=<value>#
         process_received_buffer(service_object.characteristic_d_value);
 
         // If client has enabled notifications, register a callback
@@ -272,7 +294,7 @@ int AMController::custom_service_write_callback(hci_con_handle_t con_handle, uin
         {
             instance->callback_d.callback = &characteristic_d_callback;
             instance->callback_d.context = (void *)instance;
-            //att_server_register_can_send_now_callback(&instance->callback_d, instance->con_handle);
+            // att_server_register_can_send_now_callback(&instance->callback_d, instance->con_handle);
         }
         // Alert the application of a bluetooth RX
         // PT_SEM_SAFE_SIGNAL(pt, &BLUETOOTH_READY);
