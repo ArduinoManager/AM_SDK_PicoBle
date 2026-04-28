@@ -7,6 +7,8 @@
 #include "pico/util/datetime.h"
 #include "pico/aon_timer.h"
 
+#include "hardware/adc.h"
+
 #include "gap_configuration.h"
 
 // Global instance for forwarding
@@ -822,4 +824,23 @@ void AMController::gpio_temporary_put(uint pin, bool value, uint ms)
     gpio_put(pin, value);
     sleep_ms(ms);
     gpio_put(pin, previousValue);
+}
+
+float AMController::to_voltage(uint16_t adc_value, float vref)
+{
+   const float conversion_factor = vref / (1 << 12);
+   return adc_value * conversion_factor;
+}
+
+uint16_t AMController::avg_adc_read(uint8_t samples)
+{
+   uint32_t sum = 0;
+
+   for (uint8_t i = 0; i < samples; i++)
+   {
+      sum += adc_read();
+      sleep_us(50); // small delay improves stability
+   }
+
+   return (uint16_t)(sum / samples);
 }
